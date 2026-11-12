@@ -73,8 +73,8 @@ def instructions_page():
     st.title("Study Instructions")
     st.write(f"Welcome, **{st.session_state.user_name}** (`{st.session_state.uniqname}`)!")
     
+    st.subheader("Task Description")
     st.markdown("""
-    ### Task Description
     1. **Overview:** You will evaluate **6 overhead photographs** of real plated cafeteria meals from Google's *Nutrition5k* benchmark.
     2. **Your Goal:** Estimate the **total caloric energy in kilocalories (kcal)** for each plate.
     3. **Strategy:** Carefully inspect the visible food items, portion masses, and apparent ingredient density. Note that camera angles flatten food depth and absorb oils.
@@ -123,7 +123,7 @@ def trial_page():
     else:
         st.error(f"Image not found for dish: {trial['dish_id']}")
 
-    st.markdown("---")
+    st.divider()
     
     with st.form(f"trial_form_{idx}"):
         st.subheader("Your Calorie Judgment")
@@ -246,8 +246,8 @@ def complete_page():
     st.title("Study Session Complete!")
     st.success("Thank you for participating! Your responses have been successfully recorded.")
     
+    st.subheader("Participant Summary")
     st.markdown(f"""
-    ### Participant Summary
     - **Participant:** {st.session_state.user_name} (`{st.session_state.uniqname}`)
     - **Condition:** Baseline (Without AI Assistance)
     - **Plates Evaluated:** 6 / 6

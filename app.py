@@ -33,10 +33,10 @@ else:
     Welcome! This study investigates human dietary calorie assessment under two experimental conditions:
     1. **Without AI Assistance (Baseline):** You estimate meal calories based purely on visual inspection.
     2. **With AI Assistance:** You are supported by an AI nutritional parser with itemized ingredient breakdowns and interactive portion controls.
-    
-    ---
-    ### Select Your Assigned Condition:
     """)
+    
+    st.divider()
+    st.subheader("Select Your Assigned Condition:")
     
     col1, col2 = st.columns(2)
     with col1:

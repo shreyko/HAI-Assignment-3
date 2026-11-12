@@ -59,19 +59,19 @@ To ensure the study completes in under 10 minutes (including instructions and th
 ```
 Assignment 3/
 ├── .streamlit/
-│   ├── config.toml           # UI theme settings (clean typography, emerald accents)
-│   └── secrets.toml          # Google Sheets service account credentials (local testing)
+│   ├── config.toml
+│   └── secrets.toml
 ├── data/
-│   ├── study_dataset_predictions.csv  # 219 Nutrition5k plates with ground truth & AI breakdowns
-│   ├── raw_images/           # 219 overhead meal photos
-│   └── logs/                 # Local CSV backup of participant trial and survey logs
-├── app.py                    # Unified entrypoint with dynamic URL routing (?condition=baseline / ?condition=ai)
-├── app_baseline.py           # Dedicated entrypoint for Condition 1 (Without AI)
-├── app_ai.py                 # Dedicated entrypoint for Condition 2 (With AI)
-├── study_logic.py            # Core engine: stratified sampling, Google Sheets & CSV logging
-├── requirements.txt          # Python dependencies for deployment
-├── .gitignore                # Excludes secrets and temporary logs
-└── README.md                 # Project documentation
+│   ├── study_dataset_predictions.csv
+│   ├── raw_images/
+│   └── logs/
+├── app.py
+├── app_baseline.py
+├── app_ai.py
+├── study_logic.py
+├── requirements.txt
+├── .gitignore
+└── README.md
 ```
 
 ---
@@ -81,16 +81,14 @@ Assignment 3/
 To run the study interfaces locally on your machine:
 
 ```bash
-# Navigate to the Assignment 3 directory
 cd "C:/Users/Shrey/Desktop/UM/HAI/Assignment 3"
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run the unified app (allows toggling or testing both conditions)
 streamlit run app.py
+```
 
-# Or run each interface independently:
+Or run each interface independently:
+
+```bash
 streamlit run app_baseline.py
 streamlit run app_ai.py
 ```
@@ -110,6 +108,8 @@ Both interfaces are ready for instant, zero-cost deployment on **Streamlit Commu
    * **Option B (Two Separate Apps):** Deploy one app pointing to `app_baseline.py` and a second pointing to `app_ai.py`.
 5. Under **Advanced settings -> Secrets**, paste the exact contents of `.streamlit/secrets.toml`:
    ```toml
+   GEMINI_API_KEY = "your-gemini-api-key"
+
    [connections.gsheets]
    spreadsheet = "https://docs.google.com/spreadsheets/d/15rnizijMd5Y_Yke9fzjXqIgLN3MhK5_JVrwd2LFPOdk/edit?gid=191386795#gid=191386795"
    type = "service_account"

@@ -93,6 +93,102 @@ def sample_trials(df, seed=None):
     trials.insert(insert_idx, attn_trial)
     return trials
 
+def get_gemini_api_key():
+    try:
+        if "GEMINI_API_KEY" in st.secrets:
+            return str(st.secrets["GEMINI_API_KEY"]).strip()
+    except Exception:
+        pass
+
+    env_val = os.environ.get("GEMINI_API_KEY")
+    if env_val:
+        return env_val.strip()
+
+    try:
+        import tomllib
+        local_secrets_path = os.path.join(os.path.dirname(__file__), ".streamlit", "secrets.toml")
+        if os.path.exists(local_secrets_path):
+            with open(local_secrets_path, "rb") as f:
+                s = tomllib.load(f)
+            if "GEMINI_API_KEY" in s:
+                return str(s["GEMINI_API_KEY"]).strip()
+    except Exception:
+        pass
+
+    return None
+
+def get_live_ai_prediction(image_path, fallback_data):
+    api_key = get_gemini_api_key()
+    if not api_key or not image_path or not os.path.exists(image_path):
+        return fallback_data, False
+
+    try:
+        import google.generativeai as genai
+        from PIL import Image
+        genai.configure(api_key=api_key)
+
+        img = Image.open(image_path)
+        prompt = """You are an expert nutritionist assisting a human task performer in a visual dietary assessment study.
+Analyze this overhead photograph of a plated meal.
+
+Task:
+1. Identify the visible food items and ingredients present on the plate.
+2. Estimate the portion weight (in grams) and calorie count (in kcal) for each item.
+3. Note any visible cooking oils, butter glazes, dressings, or sauces.
+4. Provide your overall estimated total calories (kcal) for the entire plate.
+5. Provide a confidence score between 0.0 and 1.0.
+6. Provide a concise 1-2 sentence visual reasoning for your estimate.
+
+Respond strictly in valid JSON format with no markdown fencing, using this exact schema:
+{
+  "breakdown": [
+    {"item": "grilled chicken breast", "estimated_grams": 160, "calories": 260},
+    {"item": "white rice", "estimated_grams": 180, "calories": 235}
+  ],
+  "total_calories": 495,
+  "confidence_score": 0.85,
+  "reasoning": "Standard restaurant portion of grilled chicken served over white rice with light seasoning."
+}
+"""
+        response = None
+        for m_name in ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-flash-latest"]:
+            try:
+                model = genai.GenerativeModel(m_name)
+                response = model.generate_content([prompt, img])
+                if response and response.text:
+                    break
+            except Exception:
+                continue
+
+        if not response or not response.text:
+            return fallback_data, False
+
+        raw_text = response.text.strip()
+        if raw_text.startswith("```"):
+            lines = raw_text.splitlines()
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            raw_text = "\n".join(lines).strip()
+
+        data = json.loads(raw_text)
+        total_cals = float(data.get("total_calories", 0))
+        conf = float(data.get("confidence_score", 0.85))
+        reasoning = str(data.get("reasoning", ""))
+        breakdown = data.get("breakdown", [])
+        if total_cals > 0 and len(breakdown) > 0:
+            return {
+                'model_predicted_calories': total_cals,
+                'model_confidence': conf,
+                'model_reasoning': reasoning,
+                'model_breakdown': breakdown
+            }, True
+    except Exception as e:
+        print(f"Live Gemini API call note: {e}")
+
+    return fallback_data, False
+
 def get_gspread_client():
     try:
         import gspread
@@ -180,7 +276,8 @@ def log_trial_response(data_dict, condition):
                     data_dict.get('confidence_1_to_5', 3),
                     data_dict.get('time_spent_sec', 0),
                     data_dict.get('is_attention_check', False),
-                    data_dict.get('passed_attention_check', True)
+                    data_dict.get('passed_attention_check', True),
+                    data_dict.get('is_live_ai_call', False)
                 ]
             ws.append_row(row_vals)
     except Exception as e:

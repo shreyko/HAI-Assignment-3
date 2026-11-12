@@ -2,6 +2,7 @@
 *.env
 .streamlit/secrets.toml
 secrets.toml
+scratch/
 data/logs/*.csv
 __pycache__/
 *.py[cod]

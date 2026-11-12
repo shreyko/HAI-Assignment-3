@@ -38,6 +38,8 @@ def init_state():
         st.session_state.completed_trials = []
     if 'user_portions' not in st.session_state:
         st.session_state.user_portions = {}
+    if 'live_predictions' not in st.session_state:
+        st.session_state.live_predictions = {}
 
 def auth_page():
     st.title("Visual Calorie Estimation Study")
@@ -79,8 +81,8 @@ def instructions_page():
     st.title("AI-Assisted Study Instructions")
     st.write(f"Welcome, **{st.session_state.user_name}** (`{st.session_state.uniqname}`)!")
     
+    st.subheader("How to Use the AI Assistance")
     st.markdown("""
-    ### How to Use the AI Assistance
     1. **Overhead Image:** Inspect the overhead meal photograph.
     2. **AI Nutritional Decomposition:** Below the photo, the AI displays identified food items, estimated gram portions, and individual calorie counts.
     3. **AI Visual Reasoning:** A brief note highlights detected surface oils, dressings, sauces, or pile stacking.
@@ -131,14 +133,38 @@ def trial_page():
     else:
         st.error(f"Image not found for dish: {trial['dish_id']}")
 
-    st.markdown("---")
-    
-    st.subheader("AI Nutritional Parser & Visual Reasoning")
-    if trial.get('model_reasoning'):
-        st.info(f"**AI Visual Reasoning:** {trial['model_reasoning']}")
+    st.divider()
 
-    breakdown = trial.get('model_breakdown', [])
-    initial_ai_cals = float(trial.get('model_predicted_calories', 0))
+    dish_id = trial['dish_id']
+    if dish_id not in st.session_state.live_predictions:
+        fallback_data = {
+            'model_predicted_calories': float(trial.get('model_predicted_calories', 0)),
+            'model_confidence': float(trial.get('model_confidence', 0.85)),
+            'model_reasoning': str(trial.get('model_reasoning', '')),
+            'model_breakdown': trial.get('model_breakdown', [])
+        }
+        with st.spinner("Analyzing plate image with Gemini AI..."):
+            pred_data, is_live_val = study_logic.get_live_ai_prediction(img_path, fallback_data)
+            st.session_state.live_predictions[dish_id] = {
+                'data': pred_data,
+                'is_live': is_live_val
+            }
+
+    ai_entry = st.session_state.live_predictions[dish_id]
+    ai_data = ai_entry['data']
+    is_live_call = ai_entry['is_live']
+
+    st.subheader("AI Nutritional Parser & Visual Reasoning")
+    if is_live_call:
+        st.success("Synchronous AI Output: Live API inference generated via Google Gemini 3.5 Flash")
+    else:
+        st.caption("AI Output: Calibrated multimodal nutritional model")
+
+    if ai_data.get('model_reasoning'):
+        st.info(f"**AI Visual Reasoning:** {ai_data['model_reasoning']}")
+
+    breakdown = ai_data.get('model_breakdown', [])
+    initial_ai_cals = float(ai_data.get('model_predicted_calories', 0))
     
     adjusted_items = []
     recalculated_cals = 0.0
@@ -191,7 +217,7 @@ def trial_page():
     else:
         recalculated_cals = initial_ai_cals
 
-    st.markdown("---")
+    st.divider()
     
     m_col1, m_col2 = st.columns(2)
     m_col1.metric("Initial AI Baseline Total", f"{initial_ai_cals:.0f} kcal")
@@ -253,7 +279,8 @@ def trial_page():
                 'confidence_1_to_5': confidence,
                 'time_spent_sec': elapsed_sec,
                 'is_attention_check': trial['is_attention_check'],
-                'passed_attention_check': passed_attn
+                'passed_attention_check': passed_attn,
+                'is_live_ai_call': is_live_call
             }
             
             study_logic.log_trial_response(record, condition="AI-Assisted")
@@ -339,8 +366,8 @@ def complete_page():
     st.title("AI-Assisted Study Session Complete!")
     st.success("Thank you for participating! Your responses have been successfully recorded.")
     
+    st.subheader("Participant Summary")
     st.markdown(f"""
-    ### Participant Summary
     - **Participant:** {st.session_state.user_name} (`{st.session_state.uniqname}`)
     - **Condition:** AI-Assisted (Human + Multimodal AI)
     - **Plates Evaluated:** 6 / 6
