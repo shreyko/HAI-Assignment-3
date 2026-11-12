@@ -1,0 +1,17 @@
+# Streamlit secrets (configure these in Streamlit Cloud Dashboard -> Settings -> Secrets)
+.streamlit/secrets.toml
+secrets.toml
+*.env
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+.venv/
+env/
+venv/
+
+# Operating system
+.DS_Store
+Thumbs.db
