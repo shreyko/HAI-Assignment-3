@@ -1,32 +1,14 @@
+import sys
 import os
 import time
 import uuid
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import streamlit as st
 from PIL import Image
 
 import study_logic
-
-st.set_page_config(
-    page_title="Calorie Estimation Study - Baseline",
-    layout="centered"
-)
-
-if 'user_id' not in st.session_state:
-    st.session_state.user_id = str(uuid.uuid4())[:8]
-if 'user_name' not in st.session_state:
-    st.session_state.user_name = ""
-if 'uniqname' not in st.session_state:
-    st.session_state.uniqname = ""
-if 'page' not in st.session_state:
-    st.session_state.page = "auth"
-if 'trials' not in st.session_state:
-    st.session_state.trials = []
-if 'current_trial_idx' not in st.session_state:
-    st.session_state.current_trial_idx = 0
-if 'trial_start_time' not in st.session_state:
-    st.session_state.trial_start_time = None
-if 'completed_trials' not in st.session_state:
-    st.session_state.completed_trials = []
 
 CONFIDENCE_LABELS = {
     1: "1 - Very Unconfident",
@@ -35,6 +17,24 @@ CONFIDENCE_LABELS = {
     4: "4 - Somewhat Confident",
     5: "5 - Very Confident"
 }
+
+def init_state():
+    if 'user_id' not in st.session_state:
+        st.session_state.user_id = str(uuid.uuid4())[:8]
+    if 'user_name' not in st.session_state:
+        st.session_state.user_name = ""
+    if 'uniqname' not in st.session_state:
+        st.session_state.uniqname = ""
+    if 'page' not in st.session_state:
+        st.session_state.page = "auth"
+    if 'trials' not in st.session_state:
+        st.session_state.trials = []
+    if 'current_trial_idx' not in st.session_state:
+        st.session_state.current_trial_idx = 0
+    if 'trial_start_time' not in st.session_state:
+        st.session_state.trial_start_time = None
+    if 'completed_trials' not in st.session_state:
+        st.session_state.completed_trials = []
 
 def auth_page():
     st.title("Visual Calorie Estimation Study")
@@ -244,7 +244,7 @@ def survey_page():
 
 def complete_page():
     st.title("Study Session Complete!")
-    st.success("Thank you for participating! Your data has been recorded in the database.")
+    st.success("Thank you for participating! Your responses have been successfully recorded.")
     
     st.markdown(f"""
     ### Participant Summary
@@ -253,24 +253,27 @@ def complete_page():
     - **Plates Evaluated:** 6 / 6
     """)
     
-    st.info(
-        "**Classroom Step:** As required by the in-class assignment instructions, "
-        "please ensure your name is entered in the participant column on the shared Google Sheet. "
-        "After completing both conditions, remember to add your comparative reflection on having AI assistance."
-    )
-    
     if st.button("Start New Session (or Switch Condition)", use_container_width=True):
         st.session_state.clear()
         st.session_state.page = "auth"
         st.rerun()
 
-if st.session_state.page == "auth":
-    auth_page()
-elif st.session_state.page == "instructions":
-    instructions_page()
-elif st.session_state.page == "trial":
-    trial_page()
-elif st.session_state.page == "survey":
-    survey_page()
-elif st.session_state.page == "complete":
-    complete_page()
+def run_baseline():
+    init_state()
+    if st.session_state.page == "auth":
+        auth_page()
+    elif st.session_state.page == "instructions":
+        instructions_page()
+    elif st.session_state.page == "trial":
+        trial_page()
+    elif st.session_state.page == "survey":
+        survey_page()
+    elif st.session_state.page == "complete":
+        complete_page()
+
+if __name__ == "__main__":
+    try:
+        st.set_page_config(page_title="Calorie Estimation Study - Baseline", layout="centered")
+    except Exception:
+        pass
+    run_baseline()
