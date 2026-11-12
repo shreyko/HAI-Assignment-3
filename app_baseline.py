@@ -158,7 +158,7 @@ def trial_page():
 
             passed_attn = True
             if trial['is_attention_check']:
-                passed_attn = (240 <= user_cals <= 260)
+                passed_attn = (user_cals == 250 and confidence == 5)
 
             record = {
                 'participant_id': st.session_state.user_id,

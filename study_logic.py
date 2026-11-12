@@ -189,6 +189,50 @@ Respond strictly in valid JSON format with no markdown fencing, using this exact
 
     return fallback_data, False
 
+def calculate_item_calories(item_name, weight_grams):
+    api_key = get_gemini_api_key()
+    if not api_key:
+        return None, False
+
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+
+        prompt = f"""Estimate the caloric content of {weight_grams} grams of {item_name}.
+Respond strictly in valid JSON format with no markdown fencing, using this schema:
+{{"item": "{item_name}", "grams": {weight_grams}, "calories": 150}}
+"""
+        response = None
+        for m_name in ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-flash-latest"]:
+            try:
+                model = genai.GenerativeModel(m_name)
+                response = model.generate_content(prompt)
+                if response and response.text:
+                    break
+            except Exception:
+                continue
+
+        if not response or not response.text:
+            return None, False
+
+        raw_text = response.text.strip()
+        if raw_text.startswith("```"):
+            lines = raw_text.splitlines()
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            raw_text = "\n".join(lines).strip()
+
+        data = json.loads(raw_text)
+        cals = float(data.get("calories", 0))
+        if cals > 0:
+            return cals, True
+    except Exception as e:
+        print(f"Item calorie calculation note: {e}")
+
+    return None, False
+
 def get_gspread_client():
     try:
         import gspread

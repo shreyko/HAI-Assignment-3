@@ -40,6 +40,10 @@ def init_state():
         st.session_state.user_portions = {}
     if 'live_predictions' not in st.session_state:
         st.session_state.live_predictions = {}
+    if 'custom_items' not in st.session_state:
+        st.session_state.custom_items = {}
+    if 'add_item_error' not in st.session_state:
+        st.session_state.add_item_error = {}
 
 def auth_page():
     st.title("Visual Calorie Estimation Study")
@@ -74,6 +78,8 @@ def auth_page():
                 st.session_state.trials = study_logic.sample_trials(df)
                 st.session_state.current_trial_idx = 0
                 st.session_state.user_portions = {}
+                st.session_state.custom_items = {}
+                st.session_state.add_item_error = {}
                 st.session_state.page = "instructions"
                 st.rerun()
 
@@ -86,10 +92,11 @@ def instructions_page():
     1. **Overhead Image:** Inspect the overhead meal photograph.
     2. **AI Nutritional Decomposition:** Below the photo, the AI displays identified food items, estimated gram portions, and individual calorie counts.
     3. **AI Visual Reasoning:** A brief note highlights detected surface oils, dressings, sauces, or pile stacking.
-    4. **Interactive Portion Controls:** If you believe an AI portion estimate is inaccurate (e.g. rice mound looks larger, or protein portion looks smaller), adjust the gram input for that item. The total plate baseline will recalculate live!
-    5. **Final Judgment:** Enter your calibrated total calorie prediction and rate your confidence on a 1-5 scale.
-    6. **Instruction Verification:** One of the trials includes an explicit instruction verification check. Please read each trial prompt carefully.
-    7. **Post-Task Survey:** After the 6 trials, answer a brief questionnaire regarding your experience and trust in the AI.
+    4. **Interactive Portion Controls:** If you believe an AI portion estimate is inaccurate, adjust the gram input for that item. The total plate baseline will recalculate live!
+    5. **Add Missed Ingredients:** If you spot an ingredient or sauce the AI missed, open the "Add an Ingredient Missed by the AI" panel to enter its name and grams. The AI will calculate its calories and add it to the plate total.
+    6. **Final Judgment:** Enter your calibrated total calorie prediction and rate your confidence on a 1-5 scale.
+    7. **Instruction Verification:** One of the trials includes an explicit instruction verification check. Please read each trial prompt carefully.
+    8. **Post-Task Survey:** After the 6 trials, answer a brief questionnaire regarding your experience and trust in the AI.
     
     *Expected study completion time: 4 to 6 minutes.*
     """)
@@ -99,6 +106,8 @@ def instructions_page():
         st.session_state.current_trial_idx = 0
         st.session_state.trial_start_time = time.time()
         st.session_state.user_portions = {}
+        st.session_state.custom_items = {}
+        st.session_state.add_item_error = {}
         st.session_state.page = "trial"
         st.rerun()
 
@@ -170,6 +179,8 @@ def trial_page():
     recalculated_cals = 0.0
     num_adjustments = 0
 
+    custom_items = st.session_state.custom_items.get(dish_id, [])
+
     if breakdown and len(breakdown) > 0:
         st.markdown("**Itemized Food Decomposition (Edit portions below if needed):**")
         
@@ -214,8 +225,110 @@ def trial_page():
                 })
             
             recalculated_cals += item_cals
+
+        for c_i, c_item in enumerate(custom_items):
+            c_name = c_item['item']
+            c_g = float(c_item['grams'])
+            c_cal = float(c_item['calories'])
+            num_adjustments += 1
+            recalculated_cals += c_cal
+            adjusted_items.append({
+                'item': c_name,
+                'original_grams': 0.0,
+                'adjusted_grams': c_g,
+                'calories': c_cal,
+                'is_user_added': True
+            })
+            c1, c2, c3, c4 = st.columns([3, 2, 2, 2])
+            c1.write(f"• {c_name} (User Added)")
+            c2.write("-")
+            c3.write(f"{c_g:.0f} g")
+            c4.write(f"**{c_cal:.0f}** kcal")
     else:
         recalculated_cals = initial_ai_cals
+        for c_i, c_item in enumerate(custom_items):
+            c_name = c_item['item']
+            c_g = float(c_item['grams'])
+            c_cal = float(c_item['calories'])
+            num_adjustments += 1
+            recalculated_cals += c_cal
+            adjusted_items.append({
+                'item': c_name,
+                'original_grams': 0.0,
+                'adjusted_grams': c_g,
+                'calories': c_cal,
+                'is_user_added': True
+            })
+
+    err_info = st.session_state.add_item_error.get(dish_id)
+    if err_info:
+        st.warning(f"Live AI calculation was unavailable for '{err_info['name']}'. Please enter your estimated calories below so you can proceed:")
+        m_col1, m_col2 = st.columns([3, 2])
+        manual_cals = m_col1.number_input(
+            f"Calories for {err_info['grams']:.0f}g of {err_info['name']} (kcal):",
+            min_value=5.0,
+            max_value=2500.0,
+            value=100.0,
+            step=10.0,
+            key=f"manual_cal_input_{dish_id}"
+        )
+        col_b1, col_b2 = st.columns([2, 2])
+        if col_b1.button("Add Item with Your Calories", key=f"btn_add_manual_{dish_id}", type="primary"):
+            if dish_id not in st.session_state.custom_items:
+                st.session_state.custom_items[dish_id] = []
+            st.session_state.custom_items[dish_id].append({
+                'item': err_info['name'],
+                'grams': float(err_info['grams']),
+                'calories': float(manual_cals),
+                'is_manual': True
+            })
+            st.session_state.add_item_error.pop(dish_id, None)
+            st.rerun()
+        if col_b2.button("Cancel", key=f"btn_cancel_manual_{dish_id}"):
+            st.session_state.add_item_error.pop(dish_id, None)
+            st.rerun()
+    else:
+        with st.expander("Add an Ingredient Missed by the AI"):
+            add_col1, add_col2 = st.columns([3, 2])
+            new_item_name = add_col1.text_input(
+                "Ingredient Name:",
+                placeholder="e.g. Ranch dressing, Butter, Guacamole",
+                key=f"new_item_name_{dish_id}"
+            )
+            new_item_grams = add_col2.number_input(
+                "Portion Grams (g):",
+                min_value=5.0,
+                max_value=1000.0,
+                value=30.0,
+                step=5.0,
+                key=f"new_item_grams_{dish_id}"
+            )
+            if st.button("Calculate Calories with AI & Add to Plate", key=f"btn_calc_add_{dish_id}"):
+                if new_item_name and new_item_name.strip():
+                    with st.spinner("Calculating calories with Gemini AI..."):
+                        calc_cals, calc_ok = study_logic.calculate_item_calories(
+                            new_item_name.strip(),
+                            float(new_item_grams)
+                        )
+                    if calc_ok and calc_cals is not None:
+                        if dish_id not in st.session_state.custom_items:
+                            st.session_state.custom_items[dish_id] = []
+                        st.session_state.custom_items[dish_id].append({
+                            'item': new_item_name.strip(),
+                            'grams': float(new_item_grams),
+                            'calories': round(calc_cals, 1),
+                            'is_manual': False
+                        })
+                        st.success(f"Added {new_item_name.strip()} ({new_item_grams:.0f}g, {calc_cals:.0f} kcal) to plate total.")
+                        st.rerun()
+                    else:
+                        st.session_state.add_item_error[dish_id] = {
+                            'name': new_item_name.strip(),
+                            'grams': float(new_item_grams)
+                        }
+                        st.rerun()
+                else:
+                    st.error("Please enter an ingredient name before calculating.")
 
     st.divider()
     
@@ -259,7 +372,7 @@ def trial_page():
 
             passed_attn = True
             if trial['is_attention_check']:
-                passed_attn = (240 <= user_cals <= 260)
+                passed_attn = (user_cals == 250 and confidence == 5)
 
             record = {
                 'participant_id': st.session_state.user_id,
