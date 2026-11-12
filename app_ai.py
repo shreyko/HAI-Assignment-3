@@ -44,6 +44,8 @@ def init_state():
         st.session_state.custom_items = {}
     if 'add_item_error' not in st.session_state:
         st.session_state.add_item_error = {}
+    if 'excluded_items' not in st.session_state:
+        st.session_state.excluded_items = {}
 
 def auth_page():
     st.title("Visual Calorie Estimation Study")
@@ -80,6 +82,7 @@ def auth_page():
                 st.session_state.user_portions = {}
                 st.session_state.custom_items = {}
                 st.session_state.add_item_error = {}
+                st.session_state.excluded_items = {}
                 st.session_state.page = "instructions"
                 st.rerun()
 
@@ -92,7 +95,7 @@ def instructions_page():
     1. **Overhead Image:** Inspect the overhead meal photograph.
     2. **AI Nutritional Decomposition:** Below the photo, the AI displays identified food items, estimated gram portions, and individual calorie counts.
     3. **AI Visual Reasoning:** A brief note highlights detected surface oils, dressings, sauces, or pile stacking.
-    4. **Interactive Portion Controls:** If you believe an AI portion estimate is inaccurate, adjust the gram input for that item. The total plate baseline will recalculate live!
+    4. **Interactive Portion Controls & Deletion:** If you believe an AI portion estimate is inaccurate, adjust the gram input. If the AI identified an item that is not on the plate (a hallucination), click "Delete" to exclude it.
     5. **Add Missed Ingredients:** If you spot an ingredient or sauce the AI missed, open the "Add an Ingredient Missed by the AI" panel to enter its name and grams. The AI will calculate its calories and add it to the plate total.
     6. **Final Judgment:** Enter your calibrated total calorie prediction and rate your confidence on a 1-5 scale.
     7. **Instruction Verification:** One of the trials includes an explicit instruction verification check. Please read each trial prompt carefully.
@@ -108,6 +111,7 @@ def instructions_page():
         st.session_state.user_portions = {}
         st.session_state.custom_items = {}
         st.session_state.add_item_error = {}
+        st.session_state.excluded_items = {}
         st.session_state.page = "trial"
         st.rerun()
 
@@ -180,15 +184,17 @@ def trial_page():
     num_adjustments = 0
 
     custom_items = st.session_state.custom_items.get(dish_id, [])
+    excluded_set = st.session_state.excluded_items.get(dish_id, set())
 
     if breakdown and len(breakdown) > 0:
-        st.markdown("**Itemized Food Decomposition (Edit portions below if needed):**")
+        st.markdown("**Itemized Food Decomposition (Edit portions or delete items below):**")
         
-        col_headers = st.columns([3, 2, 2, 2])
+        col_headers = st.columns([3, 2, 2, 2, 1.5])
         col_headers[0].markdown("**Identified Food Item**")
         col_headers[1].markdown("**AI Grams (g)**")
         col_headers[2].markdown("**Adjusted (g)**")
         col_headers[3].markdown("**Calories (kcal)**")
+        col_headers[4].markdown("**Action**")
 
         for item_i, item in enumerate(breakdown):
             name = item.get('item', f"Item {item_i+1}")
@@ -197,34 +203,55 @@ def trial_page():
             density = (orig_cal / orig_g) if orig_g > 0 else 1.0
 
             row_key = f"trial_{idx}_item_{item_i}"
-            
-            c1, c2, c3, c4 = st.columns([3, 2, 2, 2])
-            c1.write(f"• {name}")
-            c2.write(f"{orig_g:.0f} g")
-            
-            user_g = c3.number_input(
-                f"Weight for {name}",
-                min_value=5.0,
-                max_value=1200.0,
-                value=orig_g,
-                step=10.0,
-                key=row_key,
-                label_visibility="collapsed"
-            )
-            
-            item_cals = round(user_g * density, 1)
-            c4.write(f"**{item_cals:.0f}** kcal")
-            
-            if abs(user_g - orig_g) >= 1.0:
+            c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 1.5])
+
+            if item_i in excluded_set:
                 num_adjustments += 1
                 adjusted_items.append({
                     'item': name,
                     'original_grams': orig_g,
-                    'adjusted_grams': user_g,
-                    'calories': item_cals
+                    'adjusted_grams': 0.0,
+                    'calories': 0.0,
+                    'is_excluded': True
                 })
-            
-            recalculated_cals += item_cals
+                c1.write(f"• ~~{name}~~ (Excluded)")
+                c2.write(f"~~{orig_g:.0f} g~~")
+                c3.write("0 g")
+                c4.write("**0** kcal")
+                if c5.button("Restore", key=f"restore_{idx}_{item_i}"):
+                    st.session_state.excluded_items[dish_id].remove(item_i)
+                    st.rerun()
+            else:
+                c1.write(f"• {name}")
+                c2.write(f"{orig_g:.0f} g")
+                user_g = c3.number_input(
+                    f"Weight for {name}",
+                    min_value=0.0,
+                    max_value=1200.0,
+                    value=orig_g,
+                    step=10.0,
+                    key=row_key,
+                    label_visibility="collapsed"
+                )
+                item_cals = round(user_g * density, 1)
+                c4.write(f"**{item_cals:.0f}** kcal")
+                if c5.button("Delete", key=f"del_{idx}_{item_i}"):
+                    if dish_id not in st.session_state.excluded_items:
+                        st.session_state.excluded_items[dish_id] = set()
+                    st.session_state.excluded_items[dish_id].add(item_i)
+                    st.rerun()
+
+                if abs(user_g - orig_g) >= 1.0:
+                    num_adjustments += 1
+                    adjusted_items.append({
+                        'item': name,
+                        'original_grams': orig_g,
+                        'adjusted_grams': user_g,
+                        'calories': item_cals,
+                        'is_excluded': False
+                    })
+
+                recalculated_cals += item_cals
 
         for c_i, c_item in enumerate(custom_items):
             c_name = c_item['item']
@@ -237,13 +264,17 @@ def trial_page():
                 'original_grams': 0.0,
                 'adjusted_grams': c_g,
                 'calories': c_cal,
-                'is_user_added': True
+                'is_user_added': True,
+                'is_excluded': False
             })
-            c1, c2, c3, c4 = st.columns([3, 2, 2, 2])
+            c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 1.5])
             c1.write(f"• {c_name} (User Added)")
             c2.write("-")
             c3.write(f"{c_g:.0f} g")
             c4.write(f"**{c_cal:.0f}** kcal")
+            if c5.button("Delete", key=f"del_custom_{idx}_{c_i}"):
+                st.session_state.custom_items[dish_id].pop(c_i)
+                st.rerun()
     else:
         recalculated_cals = initial_ai_cals
         for c_i, c_item in enumerate(custom_items):
@@ -257,8 +288,17 @@ def trial_page():
                 'original_grams': 0.0,
                 'adjusted_grams': c_g,
                 'calories': c_cal,
-                'is_user_added': True
+                'is_user_added': True,
+                'is_excluded': False
             })
+            c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 1.5])
+            c1.write(f"• {c_name} (User Added)")
+            c2.write("-")
+            c3.write(f"{c_g:.0f} g")
+            c4.write(f"**{c_cal:.0f}** kcal")
+            if c5.button("Delete", key=f"del_custom_empty_{idx}_{c_i}"):
+                st.session_state.custom_items[dish_id].pop(c_i)
+                st.rerun()
 
     err_info = st.session_state.add_item_error.get(dish_id)
     if err_info:
