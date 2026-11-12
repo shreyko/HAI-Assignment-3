@@ -96,7 +96,6 @@ def sample_trials(df, seed=None):
 def get_gspread_client():
     try:
         import gspread
-        # 1. First attempt via Streamlit runtime secrets
         if "connections" in st.secrets and "gsheets" in st.secrets["connections"]:
             creds = dict(st.secrets["connections"]["gsheets"])
             sheet_url = creds.pop("spreadsheet", None)
@@ -106,7 +105,6 @@ def get_gspread_client():
     except Exception:
         pass
 
-    # 2. Fallback: check local .streamlit/secrets.toml relative to this script
     try:
         import tomllib
         import gspread

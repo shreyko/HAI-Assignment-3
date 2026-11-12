@@ -87,7 +87,7 @@ def instructions_page():
     """)
     
     st.divider()
-    if st.button("I Understand the Instructions — Start Baseline Study", type="primary", use_container_width=True):
+    if st.button("I Understand the Instructions: Start Baseline Study", type="primary", use_container_width=True):
         st.session_state.current_trial_idx = 0
         st.session_state.trial_start_time = time.time()
         st.session_state.page = "trial"

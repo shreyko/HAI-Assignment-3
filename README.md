@@ -1,5 +1,5 @@
 # HAI Assignment 3: Visual Calorie Estimation Web Interfaces
-### Human-AI Interaction — University of Michigan (Fall 2026)
+### Human-AI Interaction | University of Michigan (Fall 2026)
 **Author:** Shrey Kohli (uniqname: `kohlishr`)
 
 ---
@@ -106,7 +106,7 @@ Both interfaces are ready for instant, zero-cost deployment on **Streamlit Commu
 2. Go to [share.streamlit.io](https://share.streamlit.io/) and log in with your GitHub account.
 3. Click **New app**.
 4. Select your repository, branch (`main`), and set the Main file path:
-   * **Option A (Single App with URL parameters — Recommended):** Set Main file path to `app.py`.
+   * **Option A (Single App with URL parameters, Recommended):** Set Main file path to `app.py`.
    * **Option B (Two Separate Apps):** Deploy one app pointing to `app_baseline.py` and a second pointing to `app_ai.py`.
 5. Under **Advanced settings -> Secrets**, paste the exact contents of `.streamlit/secrets.toml`:
    ```toml

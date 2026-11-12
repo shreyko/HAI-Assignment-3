@@ -1,9 +1,8 @@
-# Streamlit secrets (configure these in Streamlit Cloud Dashboard -> Settings -> Secrets)
+.env
+*.env
 .streamlit/secrets.toml
 secrets.toml
-*.env
-
-# Python artifacts
+data/logs/*.csv
 __pycache__/
 *.py[cod]
 *$py.class
@@ -11,7 +10,5 @@ __pycache__/
 .venv/
 env/
 venv/
-
-# Operating system
 .DS_Store
 Thumbs.db
