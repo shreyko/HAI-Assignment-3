@@ -37,11 +37,10 @@ elif condition_param == "ai" or condition_param == "with_ai":
 else:
     st.set_page_config(
         page_title="HAI A3: Calorie Estimation Study",
-        page_icon="🥗",
         layout="centered"
     )
 
-    st.title("🥗 Visual Calorie Estimation Study")
+    st.title("Visual Calorie Estimation Study")
     st.caption("Human-AI Interaction | University of Michigan | Assignment 3")
     
     st.markdown("""
@@ -58,19 +57,19 @@ else:
     with col1:
         st.subheader("Condition 1")
         st.write("Estimate calories with your own visual judgment.")
-        if st.button("👉 Start Without AI (Baseline)", use_container_width=True, type="primary"):
+        if st.button("Start Without AI (Baseline)", use_container_width=True, type="primary"):
             st.query_params["condition"] = "baseline"
             st.rerun()
 
     with col2:
         st.subheader("Condition 2")
         st.write("Estimate calories with AI nutritional decomposition & interactive portions.")
-        if st.button("👉 Start With AI Assistance", use_container_width=True, type="primary"):
+        if st.button("Start With AI Assistance", use_container_width=True, type="primary"):
             st.query_params["condition"] = "ai"
             st.rerun()
 
     st.markdown("---")
-    with st.expander("📊 In-Class Study Administration & Live Data Export"):
+    with st.expander("In-Class Study Administration & Live Data Export"):
         st.write("**Real-Time Data Collection Status:**")
         logs_dir = os.path.join(os.path.dirname(__file__), "data", "logs")
         base_log = os.path.join(logs_dir, "baseline_trials.csv")

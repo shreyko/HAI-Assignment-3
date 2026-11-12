@@ -8,7 +8,6 @@ import study_logic
 
 st.set_page_config(
     page_title="Calorie Estimation Study - Baseline",
-    page_icon="🥗",
     layout="centered"
 )
 
@@ -38,7 +37,7 @@ CONFIDENCE_LABELS = {
 }
 
 def auth_page():
-    st.title("🥗 Visual Calorie Estimation Study")
+    st.title("Visual Calorie Estimation Study")
     st.subheader("Condition 1: Baseline (Human-Only Estimation)")
     
     st.markdown("""
@@ -71,7 +70,7 @@ def auth_page():
                 st.rerun()
 
 def instructions_page():
-    st.title("📋 Study Instructions")
+    st.title("Study Instructions")
     st.write(f"Welcome, **{st.session_state.user_name}** (`{st.session_state.uniqname}`)!")
     
     st.markdown("""
@@ -110,7 +109,7 @@ def trial_page():
     
     if trial['is_attention_check']:
         st.warning(
-            "⚠️ **Attention Check Trial:** To verify that you are reviewing trial instructions carefully, "
+            "**Attention Check Trial:** To verify that you are reviewing trial instructions carefully, "
             "please **do not** estimate the food on this plate. Instead, enter **exactly 250 kcal** into the box below "
             "and set your confidence rating to **5 (Very Confident)**."
         )
@@ -186,7 +185,7 @@ def trial_page():
             st.rerun()
 
 def survey_page():
-    st.title("📝 Post-Task Experience Survey")
+    st.title("Post-Task Experience Survey")
     st.write(f"Great job, **{st.session_state.user_name}**! You completed all 6 plates in the **Baseline (Without AI)** condition.")
     st.write("Please answer the following brief questions regarding your subjective experience during this task:")
     
@@ -244,8 +243,7 @@ def survey_page():
             st.rerun()
 
 def complete_page():
-    st.balloons()
-    st.title("🎉 Study Session Complete!")
+    st.title("Study Session Complete!")
     st.success("Thank you for participating! Your data has been recorded in the database.")
     
     st.markdown(f"""
@@ -256,7 +254,7 @@ def complete_page():
     """)
     
     st.info(
-        "📌 **Classroom Step:** As required by the in-class assignment instructions, "
+        "**Classroom Step:** As required by the in-class assignment instructions, "
         "please ensure your name is entered in the participant column on the shared Google Sheet. "
         "After completing both conditions, remember to add your comparative reflection on having AI assistance."
     )
