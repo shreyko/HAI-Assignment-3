@@ -1,0 +1,13 @@
+timestamp,participant_id,participant_name,condition,mental_demand,effort,frustration,perceived_accuracy,ai_trust,ai_portion_help,feedback_comment
+2026-11-12 15:48:13,155ac137,P1,AI-Assisted,2,3,2,4,4.0,2.0,It was a helpful estimate that made the cognitive effort lower and the task easier and faster.
+2026-11-12 15:49:00,9e19c1f6,P3,Baseline,1,2,2,4,,,I didn't recognize some of the food (just a few).
+2026-11-12 16:14:09,722a13a2,P3,AI-Assisted,1,1,1,4,5.0,4.0,
+2026-11-12 16:15:29,4cd00aa5,P6,Baseline,4,3,5,3,,,"I have a hard time estimating how much each food item is generally worth calorically. I have no way of telling if seasoning, sweetening, sauce, etc. was used easily. It was hard for me, even when I did have a rough idea of have caloric a food should be, to scale that amount based on the portion size. The portion not being in a uniform shape also made the judgement more difficult."
+2026-11-12 16:16:21,799f6209,P2,Baseline,3,3,1,3,,,
+2026-11-12 16:18:09,c295d77b,P5,Baseline,3,4,5,2,,,Did not have a mental estimate of how many calories come from each ingredient (I hardly control diet :-()
+2026-11-12 16:36:38,0d685a33,P2,AI-Assisted,2,2,1,4,4.0,4.0,
+2026-11-12 16:37:10,78274df7,P1,Baseline,3,3,5,2,,,
+2026-11-12 16:38:06,e0631746,P4,AI-Assisted,2,2,1,4,5.0,5.0,The AI estimates seemed quite reasonable and I trusted the values it gave.
+2026-11-12 16:48:51,c55450d9,P6,AI-Assisted,2,2,2,5,5.0,1.0,I had no way of telling if the AI gram estimate was accurate so I just blindly trusted it. Since it was hard for me to determine what the calorie count would be on my own I found myself blindly trusting the AI's output since I couldn't guess any better and the estimates it gave seemed to make sense to me. It rarely changed the calorie count from the suggestion but when I did I was fairly  sure the number didn't seem right.
+2026-11-12 17:13:30,744c4f8b,P4,Baseline,3,3,3,3,,,
+2026-11-12 18:41:29,5649ca40,P5,AI-Assisted,2,2,2,4,4.0,5.0,
